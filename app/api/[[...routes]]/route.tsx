@@ -18,7 +18,7 @@ import { FC } from "react";
 
 interface IntroProps {
   title: string;
-  description: string;
+  description: JSX.Element;
   player1?: string;
   player2?: string;
 }
@@ -41,9 +41,9 @@ const Intro: FC<IntroProps> = ({ title, description, player1, player2 }) => {
           <Text size={{ custom: "90px" }} color="red" align="center">
             {title}
           </Text>
-          <Text size={{ custom: "60px" }} align="center">
-            {description}
-          </Text>
+          {/* <Text size={{ custom: "60px" }} align="center"> */}
+          {description}
+          {/* </Text> */}
         </VStack>
 
         {player1 && (
@@ -322,7 +322,18 @@ app.frame("/", async (c) => {
       image: (
         <Intro
           title="YOINK OF WAR"
-          description="Challenge your friend lorem ipsum dolor sit amet"
+          description={
+            <Text size={{ custom: "60px" }} align="center">
+              <div style={{ display: "flex" }}>
+                Challenge your{" "}
+                <span style={{ color: vars.colors.red, marginLeft: "12px" }}>
+                  friend
+                </span>
+                , gather an
+              </div>
+              <div>army and win $YOINK</div>
+            </Text>
+          }
           // player1="@magicmikk"
           // player2="IT's YOU"
         />
@@ -455,14 +466,125 @@ app.frame("/info", (c) => {
       >
         <VStack gap="16" alignHorizontal="center">
           <Text size={{ custom: "50px" }}>GAME INFO</Text>
-          <div style={{ display: "flex" }}>
-            <Text>1. Challenge your friend to a $YOINK battle.</Text>
-            <Text>2. Stream as many $YOINK as possible to win the war. </Text>
-            <Text>3. The team with the most $YOINK wins. </Text>
-            <Text>
-              4. The winning team will claim all of the YOINK tokens spent in
-              the game.
-            </Text>
+          <div
+            style={{
+              border: "8px solid black",
+              background: "white",
+              borderRadius: "16px",
+              padding: "34px 40px",
+              textAlign: "left",
+              width: "750px",
+              display: "flex",
+              flexDirection: "column",
+              gap: "26px",
+            }}
+          >
+            {/* TODO: refactor into a component */}
+            <div style={{ display: "flex" }}>
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  flex: "0 0 5%",
+                }}
+              >
+                <Text size="24">1. </Text>
+              </div>
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  flex: "0 0 95%",
+                }}
+              >
+                <Text size="24">Challenge your friend to a $YOINK battle</Text>
+              </div>
+            </div>
+            <div style={{ display: "flex" }}>
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  flex: "0 0 5%",
+                }}
+              >
+                <Text size="24">2. </Text>
+              </div>
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  flex: "0 0 95%",
+                }}
+              >
+                <Text size="24">Invite friends to your team</Text>
+              </div>
+            </div>
+            <div style={{ display: "flex" }}>
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  flex: "0 0 5%",
+                }}
+              >
+                <Text size="24">3. </Text>
+              </div>
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  flex: "0 0 95%",
+                }}
+              >
+                <Text size="24">
+                  Stream as many $YOINK as possible to win the battle
+                </Text>
+              </div>
+            </div>
+            <div style={{ display: "flex" }}>
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  flex: "0 0 5%",
+                }}
+              >
+                <Text size="24">4. </Text>
+              </div>
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  flex: "0 0 95%",
+                }}
+              >
+                <Text size="24">The team with the most $YOINK wins</Text>
+              </div>
+            </div>
+            <div style={{ display: "flex" }}>
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  flex: "0 0 5%",
+                }}
+              >
+                <Text size="24">5. </Text>
+              </div>
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  flex: "0 0 95%",
+                }}
+              >
+                <Text size="24">
+                  The winners will get all of the $YOINK tokens spent in the
+                  game
+                </Text>
+              </div>
+            </div>
           </div>
         </VStack>
       </Box>

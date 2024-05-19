@@ -13,39 +13,39 @@ export interface AirStackUser {
 }
 
 export function fetchPlayerByFID(fid?: string) {
-  return Promise.resolve({
-    data: {
-      Socials: {
-        Social: [
-          {
-            dappName: "test",
-            profileHandle: "test",
-            userId: fid || "test",
-            connectedAddresses: [{ address: "test" }],
-          },
-        ],
-      },
-    },
-  });
-  // return fetchQuery(print(FindUserByFID), { fid: fid?.toString() });
+  // return Promise.resolve({
+  //   data: {
+  //     Socials: {
+  //       Social: [
+  //         {
+  //           dappName: "test",
+  //           profileHandle: "test",
+  //           userId: fid || "test",
+  //           connectedAddresses: [{ address: "test" }],
+  //         },
+  //       ],
+  //     },
+  //   },
+  // });
+  return fetchQuery(print(FindUserByFID), { fid: fid?.toString() });
 }
 
 export function fetchPlayerByHandle(handle?: string) {
-  return Promise.resolve({
-    data: {
-      Socials: {
-        Social: [
-          {
-            dappName: "test1",
-            profileHandle: "test1",
-            userId: "test1",
-            connectedAddresses: [{ address: "test" }],
-          },
-        ],
-      },
-    },
-  });
-  // return fetchQuery(print(FindUserByHandle), { handle: handle });
+  // return Promise.resolve({
+  //   data: {
+  //     Socials: {
+  //       Social: [
+  //         {
+  //           dappName: "test1",
+  //           profileHandle: "test1",
+  //           userId: "test1",
+  //           connectedAddresses: [{ address: "test" }],
+  //         },
+  //       ],
+  //     },
+  //   },
+  // });
+  return fetchQuery(print(FindUserByHandle), { handle: handle });
 }
 
 export function fetchPlayers(
