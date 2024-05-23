@@ -20,6 +20,7 @@ import { getBaseUrl } from "@/app/utils/URLUtils";
 import YoWFactoryABI from "@/app/abis/YoWFactoryABI";
 import { createPublicClient, http } from "viem";
 import { degen } from "viem/chains";
+import YoWABI from "@/app/abis/YoWABI";
 
 interface IntroProps {
   title: string;
@@ -196,7 +197,7 @@ const Battle = () => {
             2 mates
           </Text>
           <Text size={{ custom: "50px" }} color="red">
-            3 mates
+            2 mates
           </Text>
         </div>
 
@@ -643,6 +644,20 @@ app.frame("/battle/:battleId", async (c) => {
     functionName: "getBattle",
     args: [battleId],
   });
+
+  const teamA = await publicClient.readContract({
+    address: yowAddress as Address,
+    abi: YoWABI,
+    functionName: "teamA",
+  });
+
+  const teamB = await publicClient.readContract({
+    address: yowAddress as Address,
+    abi: YoWABI,
+    functionName: "teamB",
+  });
+
+  console.log({ teamA, teamB });
 
   // TODO: Fetch your current stream and team for this battle.
   const inGame = false;
