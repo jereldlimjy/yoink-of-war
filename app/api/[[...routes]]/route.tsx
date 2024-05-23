@@ -467,7 +467,7 @@ app.frame("/share/:battleid", async (c) => {
         grow
         alignHorizontal="center"
         backgroundColor="background"
-        backgroundImage={`url("${getBaseUrl()}/yoink.png")`}
+        backgroundImage='url("/yoink.png")'
         backgroundSize="cover"
         padding="48"
         fontWeight="700"
