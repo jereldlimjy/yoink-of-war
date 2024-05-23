@@ -523,7 +523,7 @@ app.frame("/share/:battleid", async (c) => {
   });
 });
 
-// TODO:
+// TODO: Get data from /battle frame
 app.frame("/stats/:battleId", (c) => {
   const { battleId } = c.req.param();
 
@@ -555,7 +555,6 @@ app.frame("/stats/:battleId", (c) => {
             }}
           >
             {/* TODO: refactor */}
-            {/* Total Yoinkers */}
             <div style={{ display: "flex", justifyContent: "space-between" }}>
               <Text size={{ custom: "42px" }}># Total Yoinkers</Text>
               <Text size={{ custom: "42px" }} color="red">
