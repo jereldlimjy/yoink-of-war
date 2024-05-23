@@ -1,7 +1,7 @@
 /** @jsxImportSource frog/jsx */
 
 import { Box, Heading, Text, VStack, vars } from "@/app/ui";
-import { Button, Frog, TextInput } from "frog";
+import { Button, Frog, TextInput, parseEther } from "frog";
 import { devtools } from "frog/dev";
 // import { neynar } from 'frog/hubs'
 import ConstantFlowAgreementV1ABI from "@/app/abis/ConstantFlowAgreementV1ABI";
@@ -15,13 +15,23 @@ import { init } from "@airstack/node";
 import { handle } from "frog/next";
 import { serveStatic } from "frog/serve-static";
 import { FC } from "react";
+import { buildShareUrl } from "@/app/utils/WarpcastUtils";
+import { getBaseUrl } from "@/app/utils/URLUtils";
 
 interface IntroProps {
   title: string;
-  description: JSX.Element;
+  description: JSX.Element | string;
   player1?: string;
   player2?: string;
 }
+
+const GAME_INFO = [
+  "Challenge your friend to a $YOINK battle",
+  "Invite friends to your team",
+  "Stream as many $YOINK as possible to win the battle",
+  "The team with the most $YOINK wins",
+  "The winners will get all of the $YOINK tokens spent in the game",
+];
 
 const Intro: FC<IntroProps> = ({ title, description, player1, player2 }) => {
   return (
@@ -29,7 +39,7 @@ const Intro: FC<IntroProps> = ({ title, description, player1, player2 }) => {
       grow
       alignHorizontal="center"
       backgroundColor="background"
-      backgroundImage="url('http://localhost:3000/into.png')"
+      backgroundImage={`url("${getBaseUrl()}/intro.png")`}
       backgroundSize="contain"
       padding="32"
       fontWeight="700"
@@ -41,9 +51,13 @@ const Intro: FC<IntroProps> = ({ title, description, player1, player2 }) => {
           <Text size={{ custom: "90px" }} color="red" align="center">
             {title}
           </Text>
-          {/* <Text size={{ custom: "60px" }} align="center"> */}
-          {description}
-          {/* </Text> */}
+          {typeof description === "string" ? (
+            <Text size={{ custom: "60px" }} align="center">
+              {description}
+            </Text>
+          ) : (
+            description
+          )}
         </VStack>
 
         {player1 && (
@@ -61,7 +75,7 @@ const Intro: FC<IntroProps> = ({ title, description, player1, player2 }) => {
         )}
         {player1 && (
           <img
-            src="http://localhost:3000/arrow-left.svg"
+            src={`${getBaseUrl()}/arrow-left.svg`}
             style={{
               position: "absolute",
               height: "72px",
@@ -87,7 +101,7 @@ const Intro: FC<IntroProps> = ({ title, description, player1, player2 }) => {
 
         {player2 && (
           <img
-            src="http://localhost:3000/arrow-right.svg"
+            src={`${getBaseUrl()}/arrow-right.svg`}
             style={{
               position: "absolute",
               height: "72px",
@@ -101,13 +115,56 @@ const Intro: FC<IntroProps> = ({ title, description, player1, player2 }) => {
   );
 };
 
+const Info: FC<{ gameInfo: string[] }> = ({ gameInfo }) => {
+  return (
+    <div
+      style={{
+        border: "8px solid black",
+        background: "white",
+        borderRadius: "16px",
+        padding: "34px 40px",
+        textAlign: "left",
+        width: "750px",
+        display: "flex",
+        flexDirection: "column",
+        gap: "26px",
+      }}
+    >
+      {gameInfo.map((info, idx) => {
+        return (
+          <div style={{ display: "flex" }}>
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                flex: "0 0 6%",
+              }}
+            >
+              <Text size={{ custom: "42px" }}>{idx + 1}. </Text>
+            </div>
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                flex: "0 0 94%",
+              }}
+            >
+              <Text size={{ custom: "42px" }}>{info}</Text>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+};
+
 const Battle = () => {
   return (
     <Box
       grow
       alignHorizontal="center"
       backgroundColor="background"
-      backgroundImage="url('http://localhost:3000/battle.png')"
+      backgroundImage={`url("${getBaseUrl()}/battle.png")`}
       backgroundSize="contain"
       padding="32"
       fontWeight="700"
@@ -219,7 +276,7 @@ const Stream: FC<StreamProps> = ({ flowRate, title }) => {
       grow
       alignHorizontal="center"
       backgroundColor="background"
-      backgroundImage="url('http://localhost:3000/yoink.png')"
+      backgroundImage={`url("${getBaseUrl()}/yoink.png")`}
       backgroundSize="cover"
       padding="48"
       fontWeight="700"
@@ -240,11 +297,11 @@ const Stream: FC<StreamProps> = ({ flowRate, title }) => {
             borderRadius: "16px",
             paddingBottom: "34px",
             textAlign: "center",
-            width: "600px",
+            width: "750px",
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
-            marginTop: "100px",
+            marginTop: "70px",
           }}
         >
           <Text size={{ custom: "200px" }}>{flowRate}</Text>
@@ -334,8 +391,6 @@ app.frame("/", async (c) => {
               <div>army and win $YOINK</div>
             </Text>
           }
-          // player1="@magicmikk"
-          // player2="IT's YOU"
         />
       ),
       intents: [
@@ -370,32 +425,35 @@ app.frame("/", async (c) => {
     intents: [
       <Button value="inc">+</Button>,
       <Button value="dec">-</Button>,
-      <Button action={`/share/${myData.userId}:${opponentData.userId}`}>
+      <Button.Transaction
+        action={`/share/${myData.userId}:${opponentData.userId}`}
+        target="/create-battle"
+      >
         Start Stream
-      </Button>,
+      </Button.Transaction>,
       <Button value="reset">Back</Button>,
-      // <Button action={`/battle/${myData.userId}:${opponentData.userId}`}>
-      //   Start first Yoink
-      // </Button>,
-      // TODO: This link will be urlencoded and "&" will turn to &amp;.
-      // <Button.Link
-      //   href={buildShareUrl(
-      //     opponentData.profileHandle,
-      //     `${myData.userId}:${opponentData.userId}`
-      //   )}
-      // >
-      //   Cast battle!
-      // </Button.Link>,
-      // <Button.Reset>Back</Button.Reset>,
     ],
   });
 });
 
-app.frame("/share/:battleid", (c) => {
+app.frame("/share/:battleid", async (c) => {
   const { buttonValue, status, deriveState, frameData, env, req, verified } = c;
 
   const { battleid } = req.param();
   const [player1, player2] = battleid.split(":");
+
+  const state = deriveState((previousState) => {});
+
+  if (state.teams.length !== 2) {
+    const teamsData = await fetchPlayersByFID(player1, player2);
+
+    if (!teamsData.includes(undefined)) {
+      state.teams = teamsData as [AirStackUser, AirStackUser];
+    }
+  }
+
+  const myData = state.teams[0];
+  const opponentData = state.teams[1];
 
   return c.res({
     image: (
@@ -403,7 +461,7 @@ app.frame("/share/:battleid", (c) => {
         grow
         alignHorizontal="center"
         backgroundColor="background"
-        backgroundImage="url('http://localhost:3000/yoink.png')"
+        backgroundImage={`url("${getBaseUrl()}/yoink.png")`}
         backgroundSize="cover"
         padding="48"
         fontWeight="700"
@@ -412,7 +470,7 @@ app.frame("/share/:battleid", (c) => {
         <VStack gap="16" alignHorizontal="center">
           <Text size={{ custom: "50px" }}>YOU'VE BEEN CHALLENGED</Text>
           <Text size={{ custom: "60px" }} color="red">
-            @Mikk challenged you to a{/* You have challenged ... to a */}
+            @{myData!.profileHandle} challenged you to a
           </Text>
           <Text size={{ custom: "60px" }} color="red">
             $YOINK battle!
@@ -437,7 +495,7 @@ app.frame("/share/:battleid", (c) => {
             </Text>
             <div style={{ display: "flex", marginTop: "20px" }}>
               <Text size={{ custom: "40px" }} color="red">
-                @Mikk yoinked 12345 times
+                @{myData!.profileHandle} yoinked 12345 times
               </Text>
             </div>
           </div>
@@ -445,7 +503,15 @@ app.frame("/share/:battleid", (c) => {
       </Box>
     ),
     intents: [
-      <Button action={`/battle/${battleid}`}>Share!</Button>,
+      <Button action={`/battle/${battleid}`}>Go to battle</Button>,
+      <Button.Link
+        href={buildShareUrl(
+          opponentData!.profileHandle,
+          `${myData!.userId}:${opponentData!.userId}`
+        )}
+      >
+        Cast battle!
+      </Button.Link>,
       <Button action="/">Back!</Button>,
     ],
   });
@@ -458,7 +524,7 @@ app.frame("/info", (c) => {
         grow
         alignHorizontal="center"
         backgroundColor="background"
-        backgroundImage="url('http://localhost:3000/yoink.png')"
+        backgroundImage={`url("${getBaseUrl()}/yoink.png")`}
         backgroundSize="cover"
         padding="48"
         fontWeight="700"
@@ -466,130 +532,11 @@ app.frame("/info", (c) => {
       >
         <VStack gap="16" alignHorizontal="center">
           <Text size={{ custom: "50px" }}>GAME INFO</Text>
-          <div
-            style={{
-              border: "8px solid black",
-              background: "white",
-              borderRadius: "16px",
-              padding: "34px 40px",
-              textAlign: "left",
-              width: "750px",
-              display: "flex",
-              flexDirection: "column",
-              gap: "26px",
-            }}
-          >
-            {/* TODO: refactor into a component */}
-            <div style={{ display: "flex" }}>
-              <div
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  flex: "0 0 5%",
-                }}
-              >
-                <Text size="24">1. </Text>
-              </div>
-              <div
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  flex: "0 0 95%",
-                }}
-              >
-                <Text size="24">Challenge your friend to a $YOINK battle</Text>
-              </div>
-            </div>
-            <div style={{ display: "flex" }}>
-              <div
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  flex: "0 0 5%",
-                }}
-              >
-                <Text size="24">2. </Text>
-              </div>
-              <div
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  flex: "0 0 95%",
-                }}
-              >
-                <Text size="24">Invite friends to your team</Text>
-              </div>
-            </div>
-            <div style={{ display: "flex" }}>
-              <div
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  flex: "0 0 5%",
-                }}
-              >
-                <Text size="24">3. </Text>
-              </div>
-              <div
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  flex: "0 0 95%",
-                }}
-              >
-                <Text size="24">
-                  Stream as many $YOINK as possible to win the battle
-                </Text>
-              </div>
-            </div>
-            <div style={{ display: "flex" }}>
-              <div
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  flex: "0 0 5%",
-                }}
-              >
-                <Text size="24">4. </Text>
-              </div>
-              <div
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  flex: "0 0 95%",
-                }}
-              >
-                <Text size="24">The team with the most $YOINK wins</Text>
-              </div>
-            </div>
-            <div style={{ display: "flex" }}>
-              <div
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  flex: "0 0 5%",
-                }}
-              >
-                <Text size="24">5. </Text>
-              </div>
-              <div
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  flex: "0 0 95%",
-                }}
-              >
-                <Text size="24">
-                  The winners will get all of the $YOINK tokens spent in the
-                  game
-                </Text>
-              </div>
-            </div>
-          </div>
+          <Info gameInfo={GAME_INFO} />
         </VStack>
       </Box>
     ),
-    intents: [<Button.Reset>Back!</Button.Reset>],
+    intents: [<Button.Reset>Close Stats</Button.Reset>],
   });
 });
 
@@ -706,6 +653,20 @@ app.frame("/end", (c) => {
         New Game
       </Button>,
     ],
+  });
+});
+
+// Create a new battle
+app.transaction("/create-battle", async (c) => {
+  const { frameData, previousState } = c;
+
+  console.log("frame data:", frameData);
+  console.log("previous state:", previousState);
+
+  return c.send({
+    chainId: "eip155:8453",
+    to: "0x8B151eBF6Ca9D3b5Bfdd1Eeb0b4F3e792B5061D9",
+    value: parseEther("0"),
   });
 });
 

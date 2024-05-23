@@ -1,16 +1,12 @@
 import { getBaseUrl } from "./URLUtils";
 
 export function buildShareUrl(handle: string, battleId: string) {
-  const shareUrl = new URL("https://warpcast.com/~/compose");
+  const text = `Prepare your butt @${handle}. I challenge you to a yoink-off!`;
+  const embed = "https://farcaster.xyz";
 
-  shareUrl.searchParams.append(
-    "text",
-    `Prepare your butt @${handle}. I challenge you to a yoink-off!`
-  );
-  shareUrl.searchParams.append(
-    "embeds",
-    `${getBaseUrl()}/api/battle/${battleId}`
-  );
+  const shareUrl = `https://warpcast.com/~/compose?text=${encodeURIComponent(
+    text
+  )}&embeds[]=${getBaseUrl()}/api/battle/${battleId}`;
 
-  return shareUrl.toString();
+  return shareUrl;
 }

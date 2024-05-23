@@ -56,7 +56,6 @@ export function fetchPlayers(
     fetchPlayerByFID(myFID),
     fetchPlayerByHandle(challengerHandle),
   ]).then((results) => {
-    console.log({ myFID, challengerHandle }, results);
     return results.map((result) => result.data.Socials.Social[0]);
   });
 }
@@ -69,7 +68,6 @@ export function fetchPlayersByFID(
     fetchPlayerByFID(player1),
     fetchPlayerByFID(player2),
   ]).then((results) => {
-    console.log("RESULTS", results);
     return results.map((result) => result.data.Socials.Social[0]);
   });
 }
