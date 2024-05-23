@@ -17,6 +17,9 @@ import { serveStatic } from "frog/serve-static";
 import { FC } from "react";
 import { buildShareUrl } from "@/app/utils/WarpcastUtils";
 import { getBaseUrl } from "@/app/utils/URLUtils";
+import YoWFactoryABI from "@/app/abis/YoWFactoryABI";
+import { createPublicClient, http } from "viem";
+import { degen } from "viem/chains";
 
 interface IntroProps {
   title: string;
@@ -32,6 +35,9 @@ const GAME_INFO = [
   "The team with the most $YOINK wins",
   "The winners will get all of the $YOINK tokens spent in the game",
 ];
+
+const YOW_FACTORY_CONTRACT_ADDRESS =
+  "0x4812B2F0C04e097fdBc29b5f6BDd2d437bc03d36";
 
 const Intro: FC<IntroProps> = ({ title, description, player1, player2 }) => {
   return (
@@ -427,7 +433,7 @@ app.frame("/", async (c) => {
       <Button value="dec">-</Button>,
       <Button.Transaction
         action={`/share/${myData.userId}:${opponentData.userId}`}
-        target="/create-battle"
+        target={`/create-battle/${myData.userId}:${opponentData.userId}`}
       >
         Start Stream
       </Button.Transaction>,
@@ -517,6 +523,81 @@ app.frame("/share/:battleid", async (c) => {
   });
 });
 
+// TODO:
+app.frame("/stats/:battleId", (c) => {
+  const { battleId } = c.req.param();
+
+  return c.res({
+    image: (
+      <Box
+        grow
+        alignHorizontal="center"
+        backgroundColor="background"
+        backgroundImage={`url("${getBaseUrl()}/yoink.png")`}
+        backgroundSize="cover"
+        padding="48"
+        fontWeight="700"
+        textAlign="center"
+      >
+        <VStack gap="16" alignHorizontal="center">
+          <Text size={{ custom: "50px" }}>STATISTICS</Text>
+          <div
+            style={{
+              border: "8px solid black",
+              background: "white",
+              borderRadius: "16px",
+              padding: "34px 40px",
+              textAlign: "left",
+              width: "750px",
+              display: "flex",
+              flexDirection: "column",
+              gap: "26px",
+            }}
+          >
+            {/* TODO: refactor */}
+            {/* Total Yoinkers */}
+            <div style={{ display: "flex", justifyContent: "space-between" }}>
+              <Text size={{ custom: "42px" }}># Total Yoinkers</Text>
+              <Text size={{ custom: "42px" }} color="red">
+                123
+              </Text>
+            </div>
+
+            <div style={{ display: "flex", justifyContent: "space-between" }}>
+              <Text size={{ custom: "42px" }}># @Username Team</Text>
+              <Text size={{ custom: "42px" }} color="red">
+                123
+              </Text>
+            </div>
+
+            <div style={{ display: "flex", justifyContent: "space-between" }}>
+              <Text size={{ custom: "42px" }}># @Username Team</Text>
+              <Text size={{ custom: "42px" }} color="red">
+                123
+              </Text>
+            </div>
+
+            <div style={{ display: "flex", justifyContent: "space-between" }}>
+              <Text size={{ custom: "42px" }}>Yoink rates</Text>
+              <Text size={{ custom: "42px" }} color="red">
+                123
+              </Text>
+            </div>
+
+            <div style={{ display: "flex", justifyContent: "space-between" }}>
+              <Text size={{ custom: "42px" }}>Game ending in</Text>
+              <Text size={{ custom: "42px" }} color="red">
+                12h 34m 5s
+              </Text>
+            </div>
+          </div>
+        </VStack>
+      </Box>
+    ),
+    intents: [<Button action={`/battle/${battleId}`}>Close Stats</Button>],
+  });
+});
+
 app.frame("/info", (c) => {
   return c.res({
     image: (
@@ -536,20 +617,33 @@ app.frame("/info", (c) => {
         </VStack>
       </Box>
     ),
-    intents: [<Button.Reset>Close Stats</Button.Reset>],
+    intents: [<Button.Reset>Close Info</Button.Reset>],
   });
 });
 
-app.frame("/battle/:battleid", async (c) => {
+app.frame("/battle/:battleId", async (c) => {
   // TODO: Check if already in game OR just chose the team. If so, show game state.
   const { buttonValue, status, deriveState, frameData, env, req, verified } = c;
 
   console.log({ status, verified, env, frameData });
 
-  const { battleid } = req.param();
-  const [player1, player2] = battleid.split(":");
+  const { battleId } = req.param();
+  const [player1, player2] = battleId.split(":");
 
   console.log({ player1, player2 });
+
+  // Fetch the battle data
+  const publicClient = createPublicClient({
+    chain: degen,
+    transport: http(),
+  });
+
+  const yowAddress = await publicClient.readContract({
+    address: YOW_FACTORY_CONTRACT_ADDRESS,
+    abi: YoWFactoryABI,
+    functionName: "getBattle",
+    args: [battleId],
+  });
 
   // TODO: Fetch your current stream and team for this battle.
   const inGame = false;
@@ -633,7 +727,7 @@ app.frame("/battle/:battleid", async (c) => {
     image: <Battle />,
     intents: [
       <Button value="team1">Join @{state.teams[0].profileHandle}</Button>,
-      <Button action="/info">Game Info</Button>,
+      <Button action={`/stats/${battleId}`}>Game Stats</Button>,
       <Button value="team2">Join @{state.teams[1].profileHandle}</Button>,
     ],
   });
@@ -657,15 +751,24 @@ app.frame("/end", (c) => {
 });
 
 // Create a new battle
-app.transaction("/create-battle", async (c) => {
+app.transaction("/create-battle/:battleId", async (c) => {
+  const { battleId } = c.req.param();
   const { frameData, previousState } = c;
 
-  console.log("frame data:", frameData);
-  console.log("previous state:", previousState);
+  const [player1, player2] = previousState.teams;
 
-  return c.send({
-    chainId: "eip155:8453",
-    to: "0x8B151eBF6Ca9D3b5Bfdd1Eeb0b4F3e792B5061D9",
+  console.log(player1, player2);
+
+  return c.contract({
+    abi: YoWFactoryABI,
+    functionName: "createYoW",
+    args: [
+      player1?.connectedAddresses[0].address,
+      player2?.connectedAddresses[0].address,
+      battleId,
+    ],
+    chainId: "eip155:666666666" as any,
+    to: YOW_FACTORY_CONTRACT_ADDRESS,
     value: parseEther("0"),
   });
 });
